@@ -1,6 +1,21 @@
-from google.cloud import vision
+import os
+import json
 
-client = vision.ImageAnnotatorClient()
+from google.cloud import vision
+from google.oauth2 import service_account
+
+credentials_info = json.loads(
+    os.getenv("GOOGLE_CREDENTIALS_JSON")
+)
+
+credentials = service_account.Credentials.from_service_account_info(
+    credentials_info
+)
+
+client = vision.ImageAnnotatorClient(
+    credentials=credentials
+)
+
 
 def extract_text_from_image(
     image_path: str
