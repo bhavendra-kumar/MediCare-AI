@@ -22,6 +22,7 @@ doctors = [
     },
 ]
 
+
 # Optional: Clear existing doctors to prevent duplicates if run multiple times
 db["doctors"].delete_many({})
 
