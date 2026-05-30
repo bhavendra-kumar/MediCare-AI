@@ -15,11 +15,19 @@ from app.socket_server import sio
 
 import app.database.indexes
 
-fastapi_app = FastAPI()
+fastapi_app = FastAPI(
+    title="MediCare AI - Backend",
+    version="1.0.0",
+    description="High-performance medical analysis and chat orchestration service."
+)
+
+@fastapi_app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "medicare-ai", "version": "1.0.0"}
 
 fastapi_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # In production, restrict this to specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

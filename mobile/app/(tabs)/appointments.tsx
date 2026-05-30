@@ -1,103 +1,108 @@
-import React, {
-    useEffect,
-    useState,
-} from "react";
-
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    Alert,
-} from "react-native";
-
-import {
-    SafeAreaView
-} from "react-native-safe-area-context";
-
-import colors
-    from "../../src/constants/colors";
-
-import {
-    getDoctors,
-    bookAppointment,
-} from "../../src/services/appointmentService";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, Text, StyleSheet, FlatList, RefreshControl, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Palette, Spacing, Typography } from "../../src/constants/theme";
+import { getDoctors, bookAppointment } from "../../src/services/appointmentService";
+import DoctorCard from "../../src/components/cards/DoctorCard";
+import FullScreenLoader from "../../src/components/FullScreenLoader";
 
 export default function AppointmentsScreen() {
+    const [doctors, setDoctors] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    const [doctors, setDoctors] =
-        useState<any[]>([]);
-
-    useEffect(() => {
-
-        fetchDoctors();
-
+    const fetchDoctors = useCallback(async () => {
+        try {
+            const response = await getDoctors();
+            setDoctors(response.data);
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
     }, []);
 
-    const fetchDoctors =
-        async () => {
+    useEffect(() => {
+        fetchDoctors();
+    }, [fetchDoctors]);
 
-            try {
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchDoctors();
+    };
 
-                const response =
-                    await getDoctors();
+    const handleBooking = async (doctor: any) => {
+        try {
+            setLoading(true);
+            await bookAppointment({
+                doctor_id: doctor.id,
+                date: "Tomorrow",
+                time: "10:00 AM",
+            });
+            Alert.alert("Success", `Appointment booked with ${doctor.name}`);
+        } catch (error) {
+            Alert.alert("Error", "Could not book appointment. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-                setDoctors(
-                    response.data
-                );
+    const renderDoctor = ({ item }: { item: any }) => (
+        <DoctorCard 
+            name={item.name}
+            specialty={item.specialization}
+            rating={item.rating || 4.8}
+            reviews={item.reviews || 120}
+            onPress={() => handleBooking(item)}
+        />
+    );
 
-            } catch (error) {
-
-                console.log(error);
-            }
-        };
-
-    const handleBooking =
-        async (doctor: string) => {
-
-            try {
-
-                await bookAppointment({
-                    doctor,
-                    date: "Tomorrow",
-                    time: "10:00 AM",
-                });
-
-                Alert.alert(
-                    "Success",
-                    "Appointment booked"
-                );
-
-            } catch (error) {
-
-                console.log(error);
-            }
-        };
+    if (loading && !refreshing) {
+        return <FullScreenLoader visible={true} message="Finding nearby doctors..." />;
+    }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <View style={styles.header}>
+                <Text style={Typography.h2}>Specialists</Text>
+            </View>
 
-            <ScrollView>
+            <FlatList
+                data={doctors}
+                renderItem={renderDoctor}
+                keyExtractor={(item) => item.id.toString()}
+                contentContainerStyle={styles.listContent}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={Typography.body1}>No specialists found in your area.</Text>
+                    </View>
+                }
+            />
+        </SafeAreaView>
+    );
+}
 
-                <Text style={styles.title}>
-                    Doctors
-                </Text>
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: Palette.grey[50],
+    },
+    header: {
+        padding: Spacing.md,
+        backgroundColor: '#FFFFFF',
+    },
+    listContent: {
+        padding: Spacing.md,
+    },
+    emptyContainer: {
+        flex: 1,
+        alignItems: 'center',
+        paddingTop: 100,
+    },
+});
 
-                {doctors.map((doctor) => (
-
-                    <View
-                        key={doctor.id}
-                        style={styles.card}
-                    >
-
-                        <Text style={styles.name}>
-                            {doctor.name}
-                        </Text>
-
-                        <Text style={styles.specialization}>
-                            {doctor.specialization}
-                        </Text>
 
                         <Text style={styles.info}>
                             {doctor.experience}

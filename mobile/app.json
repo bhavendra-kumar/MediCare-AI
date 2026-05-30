@@ -1,46 +1,45 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "MediCare AI",
+    "slug": "medicare-ai",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/images/icon.png",
-    "scheme": "mobile",
+    "icon": "./src/assets/icon.png",
+    "scheme": "medicare-ai",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.medicare.ai",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MediCare AI needs access to your camera for skin analysis and report scanning.",
+        "NSMicrophoneUsageDescription": "MediCare AI needs access to your microphone for voice assistant features."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/images/android-icon-foreground.png",
-        "backgroundImage": "./src/assets/images/android-icon-background.png",
-        "monochromeImage": "./src/assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#0066FF",
+        "foregroundImage": "./src/assets/adaptive-icon.png"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mobile"
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./src/assets/images/favicon.png"
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ],
+      "package": "com.medicare.ai"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./src/assets/images/splash-icon.png",
+          "image": "./src/assets/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#0066FF"
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

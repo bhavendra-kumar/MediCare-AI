@@ -1,4 +1,4 @@
-import api from "../api/axios";
+import api from "./apiClient";
 
 import { ENDPOINTS }
 from "../api/endpoints";

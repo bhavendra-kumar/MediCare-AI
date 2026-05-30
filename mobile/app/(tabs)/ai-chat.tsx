@@ -1,192 +1,186 @@
-import React, { useState, useEffect } from "react";
-
-import socket from "../../src/services/socketService";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
-
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { Send, Mic, MicOff, Volume2, VolumeX } from "lucide-react-native";
-import colors from "../../src/constants/colors";
+import { Send, Volume2, VolumeX } from "lucide-react-native";
+import { Palette, Spacing, Typography, Shadow, BorderRadius } from "../../src/constants/theme";
 import { sendMessageToAI } from "../../src/services/aiService";
-import { speakText } from "../../src/services/voiceService";
-import { startVoiceRecognition, stopVoiceRecognition } from "../../src/services/speechRecognitionService";
-import { 
-  startContinuousVoiceMode, 
-  stopContinuousVoiceMode, 
-  speakAIResponse 
-} from "../../src/services/continuousVoiceService";
+import { voiceService } from "../../src/services/voice.service";
 import { useTranslation } from "react-i18next";
+import AIChatBubble from "../../src/components/chat/AIChatBubble";
+import VoiceAssistantButton from "../../src/components/VoiceAssistantButton";
+import socket from "../../src/services/socketService";
 
 interface Message {
+  id: string;
   role: "user" | "ai";
   text: string;
+  timestamp: string;
 }
 
 export default function AIChatScreen() {
-  const { i18n } = useTranslation();
-  const currentLanguage = i18n.language;
+  const { t, i18n } = useTranslation();
   const [input, setInput] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [voiceMode, setVoiceMode] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      role: "ai",
+      text: "Hello 👋 I am MediCare AI. I can help you understand your symptoms or medical reports. How are you feeling today?",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    },
+  ]);
+  
+  const flatListRef = useRef<FlatList>(null);
 
-  const [messages, setMessages] =
-    useState<Message[]>([
-      {
-        role: "ai",
-        text: "Hello 👋 I am MediCare AI. Describe your symptoms.",
-      },
-    ]);
+  const handleSend = async (textOverride?: string) => {
+    const textToSend = textOverride || input;
+    if (!textToSend.trim()) return;
 
-  const handleVoiceMode = async () => {
-    if (voiceMode) {
-      stopContinuousVoiceMode();
-      setVoiceMode(false);
-      return;
-    }
-
-    // Stop normal recording if active
-    if (isRecording) {
-      stopVoiceRecognition();
-      setIsRecording(false);
-    }
-
-    setVoiceMode(true);
-    await startContinuousVoiceMode(currentLanguage, async (spokenText) => {
-      // Add user message to UI
-      setMessages((prev) => [...prev, { role: "user", text: spokenText }]);
-      
-      try {
-        setLoading(true);
-        const data = await sendMessageToAI("demo-user", spokenText, currentLanguage);
-        const aiResponse = data.response;
-
-        setMessages((prev) => [...prev, { role: "ai", text: aiResponse }]);
-        await speakAIResponse(aiResponse, currentLanguage);
-      } catch (error) {
-        console.error("AI Chat Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    });
-  };
-
-  const handleSend = async () => {
-
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
+    const userMsg: Message = {
+      id: Date.now().toString(),
       role: "user",
-      text: input,
+      text: textToSend,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages((prev) => [
-      ...prev,
-      userMessage,
-    ]);
-
-    const currentInput = input;
-
+    setMessages(prev => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
 
     try {
-
-      setLoading(true);
-
-      const data =
-        await sendMessageToAI(
-          "demo-user",
-          currentInput,
-          currentLanguage
-        );
-
-      const aiMessage: Message = {
+      const response = await sendMessageToAI("user-123", textToSend, i18n.language);
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
         role: "ai",
-        text: data.response,
+        text: response.response,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-
-      setMessages((prev) => [
-        ...prev,
-        aiMessage,
-      ]);
-
-      await speakText(data.response, currentLanguage);
-
+      setMessages(prev => [...prev, aiMsg]);
+      
+      // Auto-speak in voice mode
+      if (isListening) {
+        await voiceService.speak(aiMsg.text, i18n.language === 'en' ? 'en-US' : 'hi-IN');
+      }
     } catch (error) {
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          text: "Something went wrong. Please try again.",
-        },
-      ]);
-
+        console.error(error);
     } finally {
-
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-
-    socket.on(
-      "ai_stream",
-
-      (data) => {
-
-        setMessages((prev) => {
-
-          const updated =
-            [...prev];
-
-          updated[
-            updated.length - 1
-          ] = {
-            role: "ai",
-            text: data.text,
-          };
-
-          return updated;
-        });
-      }
+  const startVoiceMode = async () => {
+    setIsListening(true);
+    await voiceService.startListening(
+      (result) => setInput(result),
+      () => {
+        setIsListening(false);
+        // Automatically send when user stops talking
+        if (input) handleSend();
+      },
+      i18n.language === 'en' ? 'en-US' : 'hi-IN'
     );
-  }, []);
-
-  const toggleVoiceRecording = async () => {
-    if (voiceMode) {
-      stopContinuousVoiceMode();
-      setVoiceMode(false);
-    }
-
-    if (isRecording) {
-      stopVoiceRecognition();
-      setIsRecording(false);
-    } else {
-      setIsRecording(true);
-      await startVoiceRecognition(currentLanguage, (text) => {
-        setInput(text);
-      });
-    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={Typography.h2}>MediCare AI</Text>
+        <Text style={Typography.caption}>Always active • Highly Secure</Text>
+      </View>
 
-      <Text style={styles.title}>
-        MediCare AI
-      </Text>
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <AIChatBubble 
+            message={item.text} 
+            isAi={item.role === 'ai'} 
+            timestamp={item.timestamp}
+          />
+        )}
+        contentContainerStyle={styles.listContent}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+      />
 
-      <ScrollView
-        style={styles.chatContainer}
+      {loading && <AIChatBubble message="" isAi={true} isLoading={true} />}
+
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={90}
+      >
+        <View style={styles.inputContainer}>
+          <VoiceAssistantButton 
+            isListening={isListening} 
+            onSpeechStart={startVoiceMode} 
+            size={48}
+          />
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Describe your symptoms..."
+            value={input}
+            onChangeText={setInput}
+            multiline
+          />
+
+          <TouchableOpacity 
+            style={[styles.sendButton, !input.trim() && { opacity: 0.5 }]} 
+            onPress={() => handleSend()}
+            disabled={!input.trim()}
+          >
+            <Send color="#FFFFFF" size={20} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Palette.grey[100],
+    alignItems: 'center',
+  },
+  listContent: {
+    padding: Spacing.md,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: Palette.grey[100],
+  },
+  input: {
+    flex: 1,
+    backgroundColor: Palette.grey[100],
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginHorizontal: Spacing.sm,
+    maxHeight: 100,
+    fontSize: 16,
+  },
+  sendButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Palette.primary.main,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadow.sm,
+  },
+});
+
         showsVerticalScrollIndicator={false}
       >
 
@@ -218,15 +212,7 @@ export default function AIChatScreen() {
           </View>
         ))}
 
-        {loading && (
-          <ActivityIndicator
-            size="small"
-            color={colors.primary}
-            style={{
-              marginTop: 20,
-            }}
-          />
-        )}
+        {loading && <Loader text="MediCare AI is thinking..." />}
 
       </ScrollView>
 
