@@ -1,0 +1,14 @@
+[
+  {
+    "condition": "Acne Vulgaris",
+    "description": "Common skin condition caused by clogged pores.",
+    "causes": ["oil buildup", "bacteria"],
+    "precautions": ["clean skin", "avoid oily products"]
+  },
+  {
+    "condition": "Anemia",
+    "description": "Low hemoglobin in blood.",
+    "causes": ["iron deficiency"],
+    "precautions": ["eat iron-rich food"]
+  }
+]

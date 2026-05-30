@@ -1,0 +1,12 @@
+{
+  "welcome": "Welcome to MediCare AI",
+  "login": "Login",
+  "signup": "Sign Up",
+  "home": "Home",
+  "appointments": "Appointments",
+  "reports": "Reports",
+  "settings": "Settings",
+  "skin_analysis": "Skin Analysis",
+  "ai_chat": "AI Chat",
+  "language": "Language"
+}
