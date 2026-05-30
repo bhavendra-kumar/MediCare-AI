@@ -23,7 +23,7 @@ def analyze_symptoms(user_id: str, message: str, language: str = "en"):
     # 3. CONSTRUCT SYSTEM PROMPT
     full_prompt = SYSTEM_PROMPT.format(language=language, user_id=user_id) + f"\n\nContext:\n{history_text}\n\nUser: {message}"
 
-    try {
+    try:
         # 4. GENERATE CONTENT
         response = model.generate_content(full_prompt)
         ai_response = response.text
