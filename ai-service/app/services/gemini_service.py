@@ -9,7 +9,7 @@ from app.utils.prompts import SYSTEM_PROMPT
 load_dotenv()
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-3-flash-preview")
 
 def analyze_symptoms(user_id: str, message: str, language: str = "en"):
     # 1. EMERGENCY CHECK

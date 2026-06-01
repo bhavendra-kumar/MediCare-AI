@@ -1,11 +1,9 @@
-import google.generativeai as genai
-
-from PIL import Image
+from app.services.gemini_service import model
 
 def analyze_skin_image(
     image_path: str
 ):
-
+    from PIL import Image
     image = Image.open(image_path)
 
     prompt = """
@@ -21,10 +19,6 @@ def analyze_skin_image(
 
     Keep medically safe.
     """
-
-    model = genai.GenerativeModel(
-        "gemini-2.5-flash"
-    )
 
     response = model.generate_content([
         prompt,

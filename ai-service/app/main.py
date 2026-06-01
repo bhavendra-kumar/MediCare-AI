@@ -27,10 +27,11 @@ async def health_check():
 
 fastapi_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 fastapi_app.include_router(ai_router, prefix="/ai", tags=["AI"])
