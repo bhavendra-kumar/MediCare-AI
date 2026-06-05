@@ -27,7 +27,7 @@ import CustomInput from "../src/components/ui/CustomInput";
 import CustomButton from "../src/components/ui/CustomButton";
 
 import { signupUser } from "../src/services/authService";
-import { saveToken } from "../src/store/authStorage";
+import { saveToken, setOnboardingCompleted } from "../src/store/authStorage";
 
 export default function SignupScreen() {
     const [name, setName] = useState("");
@@ -61,6 +61,7 @@ export default function SignupScreen() {
 
             if (response.success) {
                 await saveToken(response.token);
+                await setOnboardingCompleted();
 
                 login(
                     response.token,

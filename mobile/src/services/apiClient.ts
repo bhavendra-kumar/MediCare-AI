@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getNetworkStatus } from "../store/networkStore";
 
 const apiClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL,
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000',
   timeout: 15000,
 });
 
@@ -15,7 +15,7 @@ apiClient.interceptors.request.use(
       });
     }
 
-    const token = await AsyncStorage.getItem("token");
+    const token = await AsyncStorage.getItem("medicare_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,7 +30,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error?.response?.status === 401) {
-      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("medicare_token");
     }
     return Promise.reject(error);
   }

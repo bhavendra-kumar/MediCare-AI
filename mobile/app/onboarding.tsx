@@ -6,24 +6,26 @@ import {
     Dimensions,
     TouchableOpacity,
 } from "react-native";
-import PagerView from "react-native-pager-view";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Palette, Spacing, Typography, BorderRadius, Shadows } from "../src/constants/theme";
 import { onboardingData } from "../src/data/onboardingData";
 import { ArrowRight, ChevronRight, Stethoscope, Brain, Shield } from "lucide-react-native";
 import { LinearGradient } from 'expo-linear-gradient';
+import OnboardingPager from "../src/components/OnboardingPager";
+import { setOnboardingCompleted } from "../src/store/authStorage";
 
 const { width, height } = Dimensions.get("window");
 
 export default function OnboardingScreen() {
-    const pagerRef = useRef<PagerView>(null);
+    const pagerRef = useRef<any>(null);
     const [currentPage, setCurrentPage] = useState(0);
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (currentPage < onboardingData.length - 1) {
             pagerRef.current?.setPage(currentPage + 1);
         } else {
+            await setOnboardingCompleted();
             router.push("/login");
         }
     };
@@ -47,13 +49,16 @@ export default function OnboardingScreen() {
                 {/* Skip */}
                 <TouchableOpacity 
                     style={styles.skipButton}
-                    onPress={() => router.push("/login")}
+                    onPress={async () => {
+                        await setOnboardingCompleted();
+                        router.push("/login");
+                    }}
                 >
                     <Text style={styles.skipText}>Skip</Text>
                 </TouchableOpacity>
 
                 {/* Pager */}
-                <PagerView
+                <OnboardingPager
                     style={styles.pager}
                     initialPage={0}
                     ref={pagerRef}
@@ -82,7 +87,7 @@ export default function OnboardingScreen() {
                             </View>
                         </View>
                     ))}
-                </PagerView>
+                </OnboardingPager>
 
                 {/* Bottom */}
                 <View style={styles.bottomContainer}>
@@ -147,10 +152,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.xl,
     },
     imageCard: {
-        width: width * 0.8,
-        height: width * 0.8,
+        width: Math.min(width * 0.8, 300),
+        height: Math.min(width * 0.8, 300),
         backgroundColor: Palette.common.white,
-        borderRadius: width * 0.4,
+        borderRadius: Math.min(width * 0.4, 150),
         ...Shadows.lg,
         justifyContent: 'center',
         alignItems: 'center',

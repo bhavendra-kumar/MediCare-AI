@@ -134,26 +134,6 @@ export const Typography = {
   },
 };
 
-    fontWeight: '600' as const,
-    color: Palette.grey[900],
-  },
-  body1: {
-    fontSize: 16,
-    fontWeight: '400' as const,
-    color: Palette.grey[800],
-  },
-  body2: {
-    fontSize: 14,
-    fontWeight: '400' as const,
-    color: Palette.grey[600],
-  },
-  caption: {
-    fontSize: 12,
-    fontWeight: '500' as const,
-    color: Palette.grey[500],
-  },
-};
-
 export const Theme = {
   light: {
     background: Palette.grey[50],

@@ -8,13 +8,7 @@ export const uploadReport =
   const response =
     await api.post(
       "/reports/analyze",
-      formData,
-      {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
+      formData
     );
 
   return response.data;

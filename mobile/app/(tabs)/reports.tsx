@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
     View,
@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
     ScrollView,
     ActivityIndicator,
+    FlatList,
+    Platform,
 } from "react-native";
 
 import * as DocumentPicker
@@ -21,6 +23,8 @@ import colors
 import { uploadReport }
     from "../../src/services/reportService";
 
+import api from "../../src/services/apiClient";
+
 export default function ReportsScreen() {
 
     const [loading, setLoading] =
@@ -28,6 +32,27 @@ export default function ReportsScreen() {
 
     const [analysis, setAnalysis] =
         useState("");
+
+    const [history, setHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            setLoadingHistory(true);
+            const response = await api.get("/reports/history");
+            if (response.data.success) {
+                setHistory(response.data.data || []);
+            }
+        } catch (error) {
+            console.log("Error fetching history:", error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
 
     const pickDocument = async () => {
 
@@ -43,19 +68,31 @@ export default function ReportsScreen() {
 
         const formData = new FormData();
 
-        formData.append(
-            "file",
-            {
-                uri: file.uri,
-                type:
-                    file.mimeType ||
-                    "image/jpeg",
-
-                name:
-                    file.name ||
-                    "report.jpg",
-            } as any
-        );
+        if (Platform.OS === "web") {
+            // On Web, document picker returns a File object or blob
+            // We use the 'file' property if available, or fetch the blob from URI
+            if (file.file) {
+                formData.append("file", file.file);
+            } else {
+                const response = await fetch(file.uri);
+                const blob = await response.blob();
+                formData.append("file", blob, file.name);
+            }
+        } else {
+            formData.append(
+                "file",
+                {
+                    uri: file.uri,
+                    type:
+                        file.mimeType ||
+                        "image/jpeg",
+    
+                    name:
+                        file.name ||
+                        "report.jpg",
+                } as any
+            );
+        }
 
         try {
 
@@ -69,6 +106,7 @@ export default function ReportsScreen() {
             setAnalysis(
                 response.analysis
             );
+            fetchHistory(); // Refresh history after upload
 
         } catch (error) {
 
@@ -109,20 +147,60 @@ export default function ReportsScreen() {
             )}
 
             {analysis ? (
-                <ScrollView
-                    style={styles.resultCard}
-                >
+                <View style={{ maxHeight: 300 }}>
+                    <ScrollView
+                        style={styles.resultCard}
+                    >
 
-                    <Text style={styles.resultTitle}>
-                        AI Analysis
-                    </Text>
+                        <Text style={styles.resultTitle}>
+                            AI Analysis
+                        </Text>
 
-                    <Text style={styles.resultText}>
-                        {analysis}
-                    </Text>
+                        <Text style={styles.resultText}>
+                            {analysis}
+                        </Text>
+                        <TouchableOpacity 
+                            onPress={() => setAnalysis("")}
+                            style={{ marginTop: 10 }}
+                        >
+                            <Text style={{ color: colors.primary, fontWeight: '600' }}>Close Analysis</Text>
+                        </TouchableOpacity>
 
-                </ScrollView>
+                    </ScrollView>
+                </View>
             ) : null}
+
+            <Text style={[styles.title, { fontSize: 24, marginTop: 20 }]}>
+                Report History
+            </Text>
+
+            {loadingHistory ? (
+                <ActivityIndicator color={colors.primary} />
+            ) : (
+                <FlatList
+                    data={history}
+                    keyExtractor={(item, index) => item._id || index.toString()}
+                    renderItem={({ item }) => (
+                        <View style={styles.historyCard}>
+                            <Text style={styles.historyDate}>
+                                {new Date(item.created_at || Date.now()).toLocaleDateString()}
+                            </Text>
+                            <Text numberOfLines={2} style={styles.historyPreview}>
+                                {item.analysis}
+                            </Text>
+                            <TouchableOpacity 
+                                onPress={() => setAnalysis(item.analysis)}
+                            >
+                                <Text style={{ color: colors.primary, marginTop: 5 }}>View Full Analysis</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                    ListEmptyComponent={
+                        <Text style={styles.emptyText}>No reports yet.</Text>
+                    }
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                />
+            )}
 
         </SafeAreaView>
     );
@@ -148,55 +226,59 @@ const styles = StyleSheet.create({
     },
 
     uploadButton: {
-        marginTop: 30,
-
-        height: 58,
-
-        borderRadius: 18,
-
-        backgroundColor:
-            colors.primary,
-
-        justifyContent: "center",
+        backgroundColor: colors.primary,
+        padding: 15,
+        borderRadius: 12,
         alignItems: "center",
+        marginTop: 20,
     },
-
     uploadText: {
-        color: "#FFFFFF",
-
-        fontWeight: "700",
-        fontSize: 16,
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "600",
     },
-
     resultCard: {
-        marginTop: 30,
-
-        backgroundColor:
-            colors.white,
-
-        borderRadius: 22,
-
-        padding: 20,
-
-        borderWidth: 1,
-        borderColor:
-            colors.border,
+        marginTop: 20,
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 15,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
-
     resultTitle: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: "700",
-
-        marginBottom: 18,
-
-        color: colors.text,
+        marginBottom: 10,
+        color: colors.primary,
     },
-
     resultText: {
         fontSize: 16,
-
-        lineHeight: 28,
-
-        color: colors.subText,
+        lineHeight: 24,
+        color: colors.text,
     },
+    historyCard: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 15,
+        marginTop: 15,
+        elevation: 1,
+    },
+    historyDate: {
+        fontSize: 12,
+        color: "#666",
+        marginBottom: 5,
+    },
+    historyPreview: {
+        fontSize: 14,
+        color: colors.text,
+    },
+    emptyText: {
+        textAlign: "center",
+        marginTop: 40,
+        color: "#999",
+        fontSize: 16,
+    }
 });

@@ -1,6 +1,7 @@
 import * as Speech from 'expo-speech';
 import { ExpoSpeechRecognitionModule, type ExpoSpeechRecognitionResultEvent } from 'expo-speech-recognition';
 import * as Haptics from 'expo-haptics';
+import { Platform } from 'react-native';
 
 class VoiceService {
   private isSpeaking = false;
@@ -47,7 +48,11 @@ class VoiceService {
 
   async startListening(onResult: (text: string) => void, onEnd: () => void, language: string = 'en-IN') {
     try {
-      if (!ExpoSpeechRecognitionModule) return false;
+      if (Platform.OS === 'web' || !ExpoSpeechRecognitionModule) {
+        console.warn("Speech recognition is not available on this platform/environment.");
+        onEnd();
+        return false;
+      }
 
       const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
       if (!granted) return false;

@@ -8,6 +8,7 @@ import {
     Image,
     ScrollView,
     ActivityIndicator,
+    Platform,
 } from "react-native";
 
 import * as ImagePicker
@@ -55,16 +56,20 @@ export default function SkinAnalysisScreen() {
             const formData =
                 new FormData();
 
-            formData.append(
-                "file",
-                {
-                    uri: selectedImage.uri,
-
-                    type: "image/jpeg",
-
-                    name: "skin.jpg",
-                } as any
-            );
+            if (Platform.OS === "web") {
+                const response = await fetch(selectedImage.uri);
+                const blob = await response.blob();
+                formData.append("file", blob, "skin.jpg");
+            } else {
+                formData.append(
+                    "file",
+                    {
+                        uri: selectedImage.uri,
+                        type: "image/jpeg",
+                        name: "skin.jpg",
+                    } as any
+                );
+            }
 
             try {
 

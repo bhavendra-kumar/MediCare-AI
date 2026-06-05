@@ -16,6 +16,8 @@ from "../src/context/AuthContext";
 import colors
 from "../src/constants/colors";
 
+import { hasCompletedOnboarding } from "../src/store/authStorage";
+
 export default function IndexScreen() {
 
   const {
@@ -27,14 +29,20 @@ export default function IndexScreen() {
 
     if (loading) return;
 
-    if (token) {
+    const checkNavigation = async () => {
+      if (token) {
+        router.replace("/(tabs)");
+      } else {
+        const completed = await hasCompletedOnboarding();
+        if (completed) {
+          router.replace("/login");
+        } else {
+          router.replace("/onboarding");
+        }
+      }
+    };
 
-      router.replace("/(tabs)");
-
-    } else {
-
-      router.replace("/onboarding");
-    }
+    checkNavigation();
 
   }, [token, loading]);
 

@@ -2,6 +2,7 @@ import AsyncStorage from
 "@react-native-async-storage/async-storage";
 
 const TOKEN_KEY = "medicare_token";
+const ONBOARDING_KEY = "has_completed_onboarding";
 
 export const saveToken = async (
   token: string
@@ -25,4 +26,13 @@ export const removeToken = async () => {
   await AsyncStorage.removeItem(
     TOKEN_KEY
   );
+};
+
+export const setOnboardingCompleted = async () => {
+  await AsyncStorage.setItem(ONBOARDING_KEY, "true");
+};
+
+export const hasCompletedOnboarding = async () => {
+  const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+  return value === "true";
 };

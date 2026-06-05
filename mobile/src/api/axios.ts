@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from 'react-native-toast-message';
 
 const api = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL: "https://medicare-ai-sb6p.onrender.com",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

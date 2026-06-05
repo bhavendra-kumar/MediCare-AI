@@ -24,6 +24,11 @@ export const scheduleNotification =
     seconds: number
   ) => {
 
+  if (Platform.OS === 'web') {
+    console.warn("Notifications are not supported on web.");
+    return;
+  }
+
   await Notifications.scheduleNotificationAsync({
     content: {
       title,

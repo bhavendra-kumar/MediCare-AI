@@ -53,7 +53,6 @@ export default function AppointmentsScreen() {
             name={item.name}
             specialty={item.specialization}
             rating={item.rating || 4.8}
-            reviews={item.reviews || 120}
             onPress={() => handleBooking(item)}
         />
     );
@@ -71,7 +70,7 @@ export default function AppointmentsScreen() {
             <FlatList
                 data={doctors}
                 renderItem={renderDoctor}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
                 contentContainerStyle={styles.listContent}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 ListEmptyComponent={
@@ -100,115 +99,5 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         paddingTop: 100,
-    },
-});
-
-
-                        <Text style={styles.info}>
-                            {doctor.experience}
-                        </Text>
-
-                        <Text style={styles.info}>
-                            ⭐ {doctor.rating}
-                        </Text>
-
-                        <TouchableOpacity
-                            style={styles.button}
-
-                            onPress={() =>
-                                handleBooking(
-                                    doctor.name
-                                )
-                            }
-                        >
-
-                            <Text style={styles.buttonText}>
-                                Book Appointment
-                            </Text>
-
-                        </TouchableOpacity>
-
-                    </View>
-                ))}
-
-            </ScrollView>
-
-        </SafeAreaView>
-    );
-}
-
-const styles = StyleSheet.create({
-
-    container: {
-        flex: 1,
-        backgroundColor:
-            colors.background,
-
-        paddingHorizontal: 20,
-    },
-
-    title: {
-        marginTop: 10,
-
-        fontSize: 32,
-        fontWeight: "700",
-
-        color: colors.text,
-    },
-
-    card: {
-        marginTop: 24,
-
-        backgroundColor:
-            colors.white,
-
-        borderRadius: 24,
-
-        padding: 22,
-
-        borderWidth: 1,
-        borderColor:
-            colors.border,
-    },
-
-    name: {
-        fontSize: 22,
-        fontWeight: "700",
-
-        color: colors.text,
-    },
-
-    specialization: {
-        marginTop: 8,
-
-        color: colors.primary,
-
-        fontWeight: "600",
-    },
-
-    info: {
-        marginTop: 6,
-
-        color: colors.subText,
-    },
-
-    button: {
-        marginTop: 20,
-
-        height: 52,
-
-        borderRadius: 18,
-
-        backgroundColor:
-            colors.primary,
-
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    buttonText: {
-        color: "#FFFFFF",
-
-        fontWeight: "700",
     },
 });

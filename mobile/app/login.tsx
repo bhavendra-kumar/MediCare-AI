@@ -19,7 +19,7 @@ import CustomInput from "../src/components/ui/CustomInput";
 import CustomButton from "../src/components/ui/CustomButton";
 
 import { loginUser } from "../src/services/authService";
-import { saveToken } from "../src/store/authStorage";
+import { saveToken, setOnboardingCompleted } from "../src/store/authStorage";
 import { AuthContext } from "../src/context/AuthContext";
 
 export default function LoginScreen() {
@@ -44,6 +44,8 @@ export default function LoginScreen() {
 
             if (response.success) {
                 await saveToken(response.token);
+                await setOnboardingCompleted();
+                login(response.token, response.user);
                 router.replace("/(tabs)");
             } else {
                 Alert.alert("Login Failed", response.message || "Invalid credentials.");

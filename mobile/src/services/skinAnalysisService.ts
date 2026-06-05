@@ -8,13 +8,7 @@ export const analyzeSkin =
   const response =
     await api.post(
       "/skin/analyze",
-      formData,
-      {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
+      formData
     );
 
   return response.data;
