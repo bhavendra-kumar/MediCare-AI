@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "MediCare - AI-Powered Medical Diagnosis",
-  description: "MediCare is an AI-powered medical diagnosis tool that provides accurate and efficient health assessments. Our advanced algorithms analyze symptoms and medical history to offer personalized insights, helping you make informed decisions about your health. Experience the future of healthcare with MediCare.",
+  title: "MediCare AI - AI-Powered Medical Diagnosis",
+  description:
+    "MediCare AI is an AI-powered medical assistant that provides accurate and efficient health assessments. Get instant answers to medical queries, analyze lab reports, detect skin conditions, and book doctor appointments—all in one seamless platform.",
 };
 
 export default function RootLayout({
@@ -23,11 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col font-sans">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
+
