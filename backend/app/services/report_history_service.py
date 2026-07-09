@@ -7,18 +7,16 @@ from datetime import datetime
 def save_report(
     user_id: str,
     file_url: str,
-    analysis: str
+    analysis: str,
+    filename: str = "report"
 ):
 
     report = {
-
         "user_id": user_id,
-
-        "file_url":
-            file_url,
-
-        "analysis":
-            analysis,
+        "filename": filename,
+        "file_url": file_url,
+        "analysis": analysis,
+        "created_at": datetime.utcnow().isoformat(),
     }
 
     reports_collection.insert_one(
@@ -51,3 +49,13 @@ def get_reports(
     )
 
     return list(reports)
+
+def delete_report(
+    user_id: str,
+    filename: str
+) -> bool:
+    result = reports_collection.delete_one({
+        "user_id": user_id,
+        "filename": filename
+    })
+    return result.deleted_count > 0

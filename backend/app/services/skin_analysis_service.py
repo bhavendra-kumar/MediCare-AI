@@ -11,18 +11,20 @@ def analyze_skin_image(
 
     Analyze this skin image carefully.
 
-    Give:
-    1. Possible condition
-    2. Severity
-    3. Recommendations
-    4. When to consult dermatologist
+    You must return a JSON object with the following fields:
+    {
+        "condition": "string specifying the possible condition",
+        "confidence": float value representing the confidence score between 0.0 and 100.0,
+        "severity": "Low" | "Medium" | "High",
+        "recommendation": "detailed recommendations and when to consult a dermatologist"
+    }
 
-    Keep medically safe.
+    Keep medically safe. Only return valid JSON.
     """
 
-    response = model.generate_content([
-        prompt,
-        image
-    ])
+    response = model.generate_content(
+        [prompt, image],
+        generation_config={"response_mime_type": "application/json"}
+    )
 
     return response.text

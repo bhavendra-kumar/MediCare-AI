@@ -4,6 +4,7 @@ from app.database.db import (
 )
 
 from datetime import datetime
+from bson import ObjectId
 
 def get_doctors():
 
@@ -30,3 +31,16 @@ def get_appointments(user_id):
         })
 
     return list(appointments)
+
+def delete_appointment(
+    user_id: str,
+    appointment_id: str
+) -> bool:
+    try:
+        result = appointments_collection.delete_one({
+            "_id": ObjectId(appointment_id),
+            "user_id": user_id
+        })
+        return result.deleted_count > 0
+    except Exception:
+        return False

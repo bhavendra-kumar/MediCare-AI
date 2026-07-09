@@ -6,6 +6,7 @@ from fastapi import (
 
 import os
 import shutil
+import json
 
 from app.services.skin_analysis_service import (
     analyze_skin_image
@@ -45,11 +46,21 @@ async def analyze_skin(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    analysis = analyze_skin_image(file_path)
+    analysis_str = analyze_skin_image(file_path)
+
+    try:
+        analysis = json.loads(analysis_str)
+    except Exception:
+        analysis = {
+            "condition": "Unknown Condition",
+            "confidence": 0.0,
+            "severity": "Medium",
+            "recommendation": analysis_str
+        }
 
     save_skin_analysis(
         user.get("email", "demo-user"),
-        file_path,  # Should ideally be a cloudinary URL but following current flow
+        file_path,
         analysis
     )
 

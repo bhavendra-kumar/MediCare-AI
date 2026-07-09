@@ -19,15 +19,15 @@ from app.services.cloudinary_service import (
     upload_file_to_cloudinary
 )
 from app.services.report_history_service import (
-    save_report
+    save_report,
+    get_reports,
+    delete_report
 )
 from fastapi import Depends
 from app.utils.auth_middleware import (
     verify_token
 )
 from fastapi import Query
-
-
 
 
 router = APIRouter()
@@ -44,9 +44,8 @@ async def analyze_report(
     file: UploadFile = File(...),
     user = Depends(verify_token)
 ):
-    # Create temp directory if not exists
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    
+
     file_path = os.path.join(UPLOAD_DIR, file.filename)
 
     with open(file_path, "wb") as buffer:
@@ -62,21 +61,35 @@ async def analyze_report(
         else:
             extracted_text = extract_text_from_image(file_path)
 
+        if not extracted_text or not extracted_text.strip():
+            extracted_text = "(No readable text found in the document. Providing a general analysis.)"
+
         # 3. Analyze text
         analysis = analyze_medical_report(extracted_text)
 
-        # 4. Save to DB
+        # 4. Save to DB (with filename and created_at)
         save_report(
             user["email"],
             cloudinary_url,
-            analysis
+            analysis,
+            filename=file.filename
         )
 
         return {
             "success": True,
+            "filename": file.filename,
             "analysis": analysis,
             "file_url": cloudinary_url
         }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "message": str(e) or "Failed to analyze report. Please try again."
+        }
+
     finally:
         # Clean up temp file
         if os.path.exists(file_path):
@@ -88,15 +101,27 @@ async def report_history(
     limit: int = Query(10),
     user = Depends(verify_token)
 ):
-    from app.services.report_history_service import get_reports
-    
     reports = get_reports(
         user["email"],
         page,
         limit
     )
 
+    # Serialize MongoDB documents (strip _id ObjectId)
+    serialized = []
+    for r in reports:
+        r.pop("_id", None)
+        serialized.append(r)
+
     return {
         "success": True,
-        "data": reports
+        "data": serialized
     }
+
+@router.delete("/{filename}")
+async def remove_report(filename: str, user = Depends(verify_token)):
+    success = delete_report(user["email"], filename)
+    if success:
+        return {"success": True, "message": "Report deleted successfully"}
+    return {"success": False, "message": "Failed to delete report"}
+

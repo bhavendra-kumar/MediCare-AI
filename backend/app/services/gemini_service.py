@@ -8,7 +8,7 @@ from app.utils.prompts import SYSTEM_PROMPT
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"), transport="rest")
 model = genai.GenerativeModel("gemini-3-flash-preview")
 
 def analyze_symptoms(user_id: str, message: str, language: str = "en"):
